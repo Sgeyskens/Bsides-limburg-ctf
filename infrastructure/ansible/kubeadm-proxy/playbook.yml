@@ -1,0 +1,68 @@
+---
+- name: Deploy HAProxy on Ubuntu
+  hosts: haproxy
+  become: yes
+  gather_facts: yes
+
+  vars:
+    haproxy_frontend_port: 6443
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install HAProxy and UFW
+      apt:
+        name:
+          - haproxy
+          - ufw
+        state: present
+      tags: [install]
+
+    - name: Ensure UFW is enabled
+      ufw:
+        state: enabled
+
+    - name: Allow HAProxy frontend port
+      ufw:
+        rule: allow
+        port: "{{ haproxy_frontend_port }}"
+        proto: tcp
+      notify: Reload UFW
+      tags: [firewall]
+
+
+    - name: Deploy HAProxy configuration
+      template:
+        src: template/haproxy.cfg.j2
+        dest: /etc/haproxy/haproxy.cfg
+        owner: root
+        group: root
+        mode: '0644'
+      notify:
+        - Validate HAProxy config
+      tags: [config]
+
+    - name: Ensure HAProxy service is enabled and running
+      systemd:
+        name: haproxy
+        enabled: yes
+        state: started
+        masked: no
+      tags: [service]
+
+  handlers:
+    - name: Validate HAProxy config
+      command: haproxy -c -f /etc/haproxy/haproxy.cfg
+      notify: Restart HAProxy
+
+    - name: Restart HAProxy
+      systemd:
+        name: haproxy
+        state: reloaded
+
+    - name: Reload UFW
+      ufw:
+        state: reloaded
