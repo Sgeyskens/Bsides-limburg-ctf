@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 import json
 import sys
-
+import os
 # -----------------------------
 # CONFIGURATION
 # -----------------------------
 INPUT_FILE = "tf_output.json"  # JSON file exported from Terraform
 INVENTORY_FILE = "inventory.ini"      # Output Ansible inventory file
-
+ANSIBLE_HOSTS_FILE = "/etc/ansible/hosts"  # Default Ansible inventory path
 # -----------------------------
 # HELPER FUNCTIONS
 # -----------------------------
@@ -61,9 +61,28 @@ def write_inventory(data, filename=INVENTORY_FILE):
 
     print(f"Ansible inventory written to: {filename}")
 
-# -----------------------------
+def move_inventory(src=INVENTORY_FILE, dest=ANSIBLE_HOSTS_FILE):
+    """Move inventory to /etc/ansible/hosts, creating directories if necessary"""
+    dest_dir = os.path.dirname(dest)
+    if not os.path.exists(dest_dir):
+        try:
+            os.makedirs(dest_dir, exist_ok=True)
+        except PermissionError:
+            print(f"Error: Cannot create directory '{dest_dir}', permission denied.")
+            sys.exit(1)
+
+    try:
+        os.replace(src, dest)
+        print(f"Inventory moved to: {dest}")
+    except PermissionError:
+        print(f"Error: Cannot write to '{dest}', permission denied. Run as root or use sudo.")
+        sys.exit(1)
+
+
+# -----------------------------S
 # MAIN
 # -----------------------------
 if __name__ == "__main__":
     terraform_data = load_json(INPUT_FILE)
     write_inventory(terraform_data)
+    move_inventory()
