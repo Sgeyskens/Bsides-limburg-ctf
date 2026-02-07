@@ -1,0 +1,74 @@
+name: Build and Push All Dockerfiles to GitLab Registry
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      ####################################################################### 
+      # 1. SONARQUBE – SOURCE CODE ANALYSIS 
+      ####################################################################### 
+      
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v2
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      ####################################################################### 
+      # 2. LOGIN TO GITLAB REGISTRY 
+      #######################################################################
+      - name: Log in to GitLab Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.GITLAB_REGISTRY }}
+          username: ${{ secrets.GITLAB_USERNAME }}
+          password: ${{ secrets.GITLAB_TOKEN }}
+
+      ####################################################################### 
+      # 3. BUILD, SCAN, AND PUSH ALL DOCKERFILES 
+      ####################################################################### 
+      
+      - name: Build and push all Dockerfiles
+        run: |
+          set -e
+
+          FILES=$(find . -type f -iname "Dockerfile")
+
+          if [ -z "$FILES" ]; then
+            echo "No Dockerfiles found"
+            exit 1
+          fi
+
+          echo "Found Dockerfiles:"
+          echo "$FILES"
+
+          for FILE in $FILES; do
+            echo "Processing $FILE"
+
+            IMAGE_NAME=$(grep -m1 '^# image-name:' "$FILE" | cut -d':' -f2 | sed 's/\r//g' | xargs)
+
+            if [ -z "$IMAGE_NAME" ]; then
+              echo "ERROR: Missing '# image-name: <name>' in $FILE"
+              exit 1
+            fi
+            
+            CONTEXT=$(dirname "$FILE")
+            FULL_IMAGE="${{ secrets.GITLAB_REGISTRY }}/${IMAGE_NAME}:latest"
+
+            echo "Building image: $FULL_IMAGE"
+            docker build -f "$FILE" -t "$FULL_IMAGE" "$CONTEXT"
+
+            echo "Pushing $FULL_IMAGE"
+            docker push "$FULL_IMAGE"
+
+            echo "Successfully pushed $FULL_IMAGE"
+          done
+
