@@ -34,6 +34,11 @@ def generate_hosts(ips, users):
 def write_inventory(data, filename=INVENTORY_FILE):
     """Write Ansible inventory file"""
     inventory = []
+    inventory.append("[k8s_cluster:children]")
+    inventory.append("masters")
+    inventory.append("workers")
+    inventory.append("haproxy")
+    inventory.append("")
 
     # Masters
     masters = generate_hosts(data.get("master_ips", []), data.get("master_users", []))
