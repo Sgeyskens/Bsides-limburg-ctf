@@ -26,14 +26,14 @@ output "master_users" {
 output "worker_ips" {
   description = "IP addresses of Kubernetes worker nodes"
   value = [
-    for i in range(var.sl_count) : "${var.network}.${20 + i}"
+    for i in range(var.wk_count) : "${var.network}.${20 + i}"
   ]
 }
 
 output "worker_users" {
   description = "Cloud-init users for Kubernetes worker nodes"
   value = [
-    for i in range(var.sl_count) : var.sl_ci_user
+    for i in range(var.wk_count) : var.wk_ci_user
   ]
 }
 

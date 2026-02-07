@@ -136,48 +136,48 @@ variable "ms_ci_password" {
 # Kubernetes Worker Configuration
 ###############################################################################
 
-variable "sl_count" {
+variable "wk_count" {
   description = "Number of Kubernetes worker nodes"
   type        = number
 }
 
-variable "sl_vmid" {
+variable "wk_vmid" {
   description = "Starting VMID for worker nodes (incremented by count index)"
   type        = number
 }
 
-variable "sl_cpu_cores" {
+variable "wk_cpu_cores" {
   description = "Number of CPU cores allocated to each worker node"
   type        = number
 }
 
-variable "sl_cpu_sockets" {
+variable "wk_cpu_sockets" {
   description = "Number of CPU sockets allocated to each worker node"
   type        = number
 }
 
-variable "sl_memory" {
+variable "wk_memory" {
   description = "Amount of RAM (in MB) allocated to each worker node"
   type        = number
 }
 
-variable "sl_storage_size" {
+variable "wk_storage_size" {
   description = "Disk size allocated to each worker node (e.g. 75G)"
   type        = string
 }
 
-variable "sl_network_interface" {
+variable "wk_network_interface" {
   description = "Proxmox bridge/interface used by worker nodes"
   type        = string
 }
 
-variable "sl_ci_user" {
+variable "wk_ci_user" {
   description = "Cloud-init username for worker nodes"
   type        = string
   default     = "worker"
 }
 
-variable "sl_ci_password" {
+variable "wk_ci_password" {
   description = "Cloud-init password for worker nodes"
   type        = string
   sensitive   = true
@@ -269,7 +269,7 @@ provider "proxmox" {
   pm_api_token_id     = var.pm_api_token_id
   pm_api_token_secret = var.pm_api_token_secret
   pm_tls_insecure     = true
-  pm_parallel         = 2
+  pm_parallel         = 1
 }
 
 # ==============================================================================
@@ -280,10 +280,11 @@ provider "proxmox" {
 # Resources: 3 cores, 6GB RAM, 50GB disk per node
 
 resource "proxmox_vm_qemu" "Kubernetes-Master" {
+
   name        = "Kubernetes-Master-${count.index}"  # VM name: k8s-master-0, k8s-master-1, k8s-master-2
   vmid        = 200 + count.index                   # VMID: 200, 201, 202
   count       = var.ms_count                                   # Create 3 master nodes
-  target_node = var.pm_hosts[count.index]           # Proxmox node to deploy on
+  target_node = var.pm_hosts[count.index % length(var.pm_hosts)]           # Proxmox node to deploy on
   clone       = var.template_name                   # Clone from cloud image template
   boot        = "order=scsi0"                       # Boot from SCSI disk 0
   agent       = 1                                   # Enable Proxmox agent
@@ -345,25 +346,22 @@ resource "proxmox_vm_qemu" "Kubernetes-Master" {
 # Resources: 7 cores, 16GB RAM, 75GB disk per node
 
 resource "proxmox_vm_qemu" "Kubernetes-Worker" {
-    depends_on = [
-    proxmox_vm_qemu.Kubernetes-Master  # Wait for masters to be created first
-  ]
 
   name        = "Kubernetes-Worker-${count.index}"  # VM name: k8s-worker-0, k8s-worker-1, k8s-worker-2
   vmid        = 300 + count.index                   # VMID: 300, 301, 302
-  count       = var.sl_count                                  # Create 3 worker nodes
-  target_node = var.pm_hosts[count.index]           # Proxmox node to deploy on
+  count       = var.wk_count                               # Create 3 worker nodes
+  target_node = var.pm_hosts[count.index % length(var.pm_hosts)]           # Proxmox node to deploy on
   clone       = var.template_name                   # Clone from cloud image template
   boot        = "order=scsi0"                       # Boot from SCSI disk 0
   agent       = 1                                   # Enable Proxmox agent
 
   os_type     = "cloud-init"                        # Cloud-init OS type for cloud image support
   cpu {
-    cores   = var.sl_cpu_cores                                    # 7 CPU cores per worker (more for workloads)
-    sockets = var.sl_cpu_sockets                                     # Single socket
+    cores   = var.wk_cpu_cores                                    # 7 CPU cores per worker (more for workloads)
+    sockets = var.wk_cpu_sockets                                     # Single socket
     type    = "host"                                # Use host CPU type for performance
   }
-  memory           = var.sl_memory                          # 16GB RAM per worker (more for containers)
+  memory           = var.wk_memory                          # 16GB RAM per worker (more for containers)
   scsihw           = "virtio-scsi-pci"              # High-performance SCSI controller
   ciupgrade        = true                           # Auto-upgrade cloud-init packages
   vm_state         = "running"                      # Keep VM running
@@ -391,7 +389,7 @@ resource "proxmox_vm_qemu" "Kubernetes-Worker" {
       scsi0 {
         disk {
           storage = var.storage_location                       # Main disk storage location
-          size    = var.sl_storage_size                           # Main disk size (75GB - larger for containers)
+          size    = var.wk_storage_size                           # Main disk size (75GB - larger for containers)
         }
       }
     }
@@ -399,12 +397,12 @@ resource "proxmox_vm_qemu" "Kubernetes-Worker" {
 
   network {
     id     = 0                                      # Network device 0
-    bridge = var.sl_network_interface                               # Bridge to vmbr1 (internal network)
+    bridge = var.wk_network_interface                               # Bridge to vmbr1 (internal network)
     model  = "virtio"                               # High-performance virtio network model
   }
 
-  ciuser     = var.sl_ci_user                               # Cloud-init user
-  cipassword = var.sl_ci_password                        # Cloud-init password
+  ciuser     = var.wk_ci_user
+  cipassword = var.wk_ci_password
 }
 
 # ==============================================================================
@@ -419,7 +417,7 @@ resource "proxmox_vm_qemu" "HA-proxy" {
   name        = "Kubernetes-HA-proxy"               # VM name for the load balancer
   vmid        = 400 + count.index                   # VMID: 400
   count       = var.pr_count                                   # Single HA proxy node
-  target_node = var.pm_hosts[count.index]                         # Proxmox node to deploy on
+  target_node = var.pm_hosts[count.index % length(var.pm_hosts)]                         # Proxmox node to deploy on
   clone       = var.template_name                   # Clone from cloud image template
   boot        = "order=scsi0"                       # Boot from SCSI disk 0
   agent       = 1                                   # Enable Proxmox agent
@@ -439,7 +437,7 @@ resource "proxmox_vm_qemu" "HA-proxy" {
   ipconfig0  = "ip=${var.network}.${30 + count.index}${var.subnet_mask},gw=${var.gateway}"  # Static IP assignment
   skip_ipv6  = var.disabled_ipv6                                 # Disable IPv6
   nameserver = var.dns_servers                   # DNS servers (Cloudflare, Google)
-  sshkeys = var.SSH_public_key                      # SSH public key for authentication
+   sshkeys = var.SSH_public_key                      # SSH public key for authentication
   serial {
     id   = 0                                        # Serial port 0
     type = "socket"                                 # Socket-based serial connection
@@ -469,6 +467,6 @@ resource "proxmox_vm_qemu" "HA-proxy" {
     model  = "virtio"                               # High-performance virtio network model
   }
 
-  ciuser     = var.pr_ci_user                               # Cloud-init user
-  cipassword = var.pr_ci_password                        # Cloud-init password
+    ciuser     = var.pr_ci_user                               # Cloud-init user
+    cipassword = var.pr_ci_password                        # Cloud-init password
 }
