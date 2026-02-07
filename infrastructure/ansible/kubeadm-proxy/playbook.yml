@@ -4,9 +4,6 @@
   become: yes
   gather_facts: yes
 
-  vars:
-    haproxy_frontend_port: 6443
-
   tasks:
     - name: Update apt cache
       apt:
@@ -28,7 +25,7 @@
     - name: Allow HAProxy frontend port
       ufw:
         rule: allow
-        port: "{{ haproxy_frontend_port }}"
+        port: "6443"
         proto: tcp
       notify: Reload UFW
       tags: [firewall]
@@ -53,6 +50,14 @@
         masked: no
       tags: [service]
 
+    - name: Wait until HAProxy frontend is responding
+      wait_for:
+        host: "{{ inventory_hostname }}"
+        port: 6443
+        delay: 2
+        timeout: 30
+        state: started
+        
   handlers:
     - name: Validate HAProxy config
       command: haproxy -c -f /etc/haproxy/haproxy.cfg
