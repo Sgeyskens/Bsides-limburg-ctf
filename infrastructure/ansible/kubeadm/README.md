@@ -33,17 +33,17 @@ Additional control-plane nodes and all workers are joined **manually** (recommen
     - Inventory file (`inventory.ini`) with groups:
     
     ```jsx
-    [control_plane]
+    [masters]
     192.168.1.[10:12]
     
     [workers]
     192.168.1.[20:22]
     
-    [HAProxy]
+    [haproxy]
     192.168.1.30
     
     [k8s_cluster:children]
-    control_plane
+    masters
     workers
     
     [all:vars]
@@ -56,48 +56,3 @@ Additional control-plane nodes and all workers are joined **manually** (recommen
 ```bash
 ansible-playbook -i inventory.ini playbook.yml
 ```
-
-### Manually Join Additional Control-Plane Nodes (Masters)
-
-**Important:** Join **one at a time** — wait 3–5 minutes between each to allow etcd learner promotion.
-
-On the **first master** (Kubernetes-Master-0):
-
-```bash
-# Re-upload certs (key expires after 2 hours!)
-sudo kubeadm init phase upload-certs --upload-certs
-# Example output: Using certificate key: abcdef1234567890abcdef1234567890...
-
-# Get fresh base join command
-kubeadm token create --print-join-command
-# Example: kubeadm join 192.168.1.30:6443 --token xxxxx... --discovery-token-ca-cert-hash sha256:yyyyy...
-
-# Combine into FULL control-plane join (replace values):
-kubeadm join 192.168.1.30:6443 --token xxxxx... \
-  --discovery-token-ca-cert-hash sha256:yyyyy... \
-  --control-plane \
-  --certificate-key abcdef1234567890abcdef1234567890...
-```
-
-Run the last full command **as root** on the next master node.
-
-Repeat for the third master (re-upload certs first if >2h passed).
-
-**Verify after each join** (from first master):
-
-```bash
-kubectl get nodes -o wide
-etcdctl member list   # (with cert flags) — expect growing number of members
-```
-
-### Manually Join Worker Nodes
-
-On the **first master**:
-
-```bash
-kubeadm token create --print-join-command
-# Example output:
-# kubeadm join 192.168.1.30:6443 --token zzzzz... --discovery-token-ca-cert-hash sha256:wwwww...
-```
-
-Run the output command as root on each worker node.
