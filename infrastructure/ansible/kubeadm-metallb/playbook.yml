@@ -1,0 +1,114 @@
+---
+# roles/metallb/tasks/main.yml
+
+- name: Deploy MetalLB using Helm
+  hosts: masters[0]
+  become: true
+  run_once: true
+  vars_files:
+    - variables.yml
+  environment:
+    KUBECONFIG: "/etc/kubernetes/admin.conf"
+
+  tasks:
+    - name: Ensure required packages are installed
+      ansible.builtin.apt:
+        name:
+          - python3-pip
+          - python3-kubernetes
+        state: present
+        update_cache: yes
+
+    - name: Install Helm (idempotent)
+      ansible.builtin.get_url:
+        url: https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+        dest: /tmp/get-helm-3.sh
+        mode: '0755'
+
+    - name: Run Helm installer
+      ansible.builtin.command: bash /tmp/get-helm-3.sh
+      args:
+        creates: /usr/local/bin/helm
+
+    - name: Remove installer script
+      ansible.builtin.file:
+        path: /tmp/get-helm-3.sh
+        state: absent
+
+    - name: Add MetalLB Helm repository
+      kubernetes.core.helm_repository:
+        name: metallb
+        repo_url: https://metallb.github.io/metallb
+
+    - name: Install or upgrade MetalLB
+      kubernetes.core.helm:
+        name: metallb
+        chart_ref: metallb/metallb
+        release_namespace: "{{ metallb_namespace }}"
+        create_namespace: true
+        wait: true
+
+    - name: Wait for MetalLB controller to be ready
+      kubernetes.core.k8s_info:
+        kind: Pod
+        namespace: "{{ metallb_namespace }}"
+        label_selectors:
+          - app.kubernetes.io/component=controller
+      register: controller_pods
+      until: controller_pods.resources | length > 0 and
+             controller_pods.resources[0].status.containerStatuses[0].ready
+      retries: 20
+      delay: 5
+
+    - name: Wait for MetalLB speaker pods to be ready
+      kubernetes.core.k8s_info:
+        kind: Pod
+        namespace: "{{ metallb_namespace }}"
+        label_selectors:
+          - app.kubernetes.io/component=speaker
+      register: speaker_pods
+      until: speaker_pods.resources | length > 0 and
+             (speaker_pods.resources | map(attribute='status.containerStatuses') | list | flatten | selectattr('ready') | list | length) > 0
+      retries: 20
+      delay: 5
+
+    - name: Configure MetalLB IPAddressPool
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: metallb.io/v1beta1
+          kind: IPAddressPool
+          metadata:
+            name: default-pool
+            namespace: "{{ metallb_namespace }}"
+          spec:
+            addresses:
+              - "{{ metallb_ip_pool_start }}-{{ metallb_ip_pool_end }}"
+
+    - name: Configure MetalLB L2Advertisement
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: metallb.io/v1beta1
+          kind: L2Advertisement
+          metadata:
+            name: default-l2
+            namespace: "{{ metallb_namespace }}"
+          spec:
+            ipAddressPools:
+              - default-pool
+
+    - name: Wait for all pods in all namespaces to be Ready
+      ansible.builtin.command: >
+        kubectl get pods --all-namespaces --no-headers
+      register: all_pods
+      until: all_pods.stdout_lines | select("search", "Running") | length == all_pods.stdout_lines | length
+      retries: 60
+      delay: 10
+
+
+    - name: Show MetalLB pod status
+      kubernetes.core.k8s_info:
+        kind: Pod
+        namespace: "{{ metallb_namespace }}"
+      register: metallb_pods
