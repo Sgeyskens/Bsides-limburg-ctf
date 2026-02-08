@@ -37,21 +37,27 @@ def load_terraform_json(file_path):
         sys.exit(1)
 
 
-def generate_hosts(ips, users):
-    """Create lines like '192.168.1.10 ansible_user=root'"""
+def generate_hosts(ips, users, role_prefix):
+    """
+    Create lines like '192.168.1.10 ansible_user=root custom_hostname=master1'
+    """
     if not ips:
         return []
     
-    # Safety: make sure lengths match (should always be true from your terraform)
+    # Safety: make sure lengths match
     if len(ips) != len(users):
         print(f"Warning: IP count ({len(ips)}) ≠ user count ({len(users)}) — using first user for all")
         users = [users[0]] * len(ips) if users else ["root"] * len(ips)
     
-    return [f"{ip.strip()} ansible_user={user.strip()}" for ip, user in zip(ips, users)]
+    hosts = []
+    for i, (ip, user) in enumerate(zip(ips, users), start=1):
+        hostname = f"{role_prefix}{i}" if len(ips) > 1 else role_prefix
+        hosts.append(f"{ip.strip()} ansible_user={user.strip()} custom_hostname={hostname}")
+    return hosts
 
 
 def write_inventory(data, filename=INVENTORY_FILE):
-    """Generate classic Ansible INI inventory"""
+    """Generate classic Ansible INI inventory with custom hostnames"""
     inventory = []
 
     # Group hierarchy
@@ -62,31 +68,25 @@ def write_inventory(data, filename=INVENTORY_FILE):
     inventory.append("")
 
     # Masters
-    masters = generate_hosts(data.get("master_ips", []), data.get("master_users", []))
+    masters = generate_hosts(data.get("master_ips", []), data.get("master_users", []), "kubernetes-master")
     if masters:
         inventory.append("[masters]")
         inventory.extend(masters)
         inventory.append("")
 
     # Workers
-    workers = generate_hosts(data.get("worker_ips", []), data.get("worker_users", []))
+    workers = generate_hosts(data.get("worker_ips", []), data.get("worker_users", []), "kubernetes-worker")
     if workers:
         inventory.append("[workers]")
         inventory.extend(workers)
         inventory.append("")
 
     # HAProxy (usually 1 item)
-    proxy_lines = generate_hosts(data.get("haproxy_ip", []), data.get("haproxy_user", []))
-    if proxy_lines:
+    proxies = generate_hosts(data.get("haproxy_ip", []), data.get("haproxy_user", []), "kubernetes-haproxy")
+    if proxies:
         inventory.append("[haproxy]")
-        inventory.extend(proxy_lines)
+        inventory.extend(proxies)
         inventory.append("")
-
-    # Optional: add all-in-one group if you like
-    # inventory.append("[k8s_all:children]")
-    # inventory.append("masters")
-    # inventory.append("workers")
-    # inventory.append("haproxy")
 
     try:
         with open(filename, "w") as f:
