@@ -1,0 +1,26 @@
+- name: Deploy Prometheus, Grafana, Loki, and Promtail
+  hosts: masters[0]
+  become: yes
+
+  environment:
+    KUBECONFIG: "/etc/kubernetes/admin.conf"
+
+  tasks:
+    - name: Add Prometheus Helm repository
+      shell: helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+
+    - name: Update Helm repositories
+      shell: helm repo update
+    
+    - name: Install Prometheus and Grafana
+      shell: |
+        helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
+          --namespace monitoring --create-namespace \
+          --set grafana.service.type=LoadBalancer \
+          --set grafana.service.port=3000 \
+          --set admissionWebhooks.enabled=true \
+          --set admissionWebhooks.patch.enabled=true \
+          --set admissionWebhooks.patch.rbac.create=true
+
+    - name: Wait for all monitoring pods to be ready
+      shell: kubectl wait --namespace monitoring --for=condition=ready pod --all --timeout=300s
