@@ -1,0 +1,78 @@
+---
+- name: Install NGINX Ingress Controller via Helm
+  hosts: masters[0]
+  become: true
+  gather_facts: false
+  vars_files:
+    - variables.yml
+  environment:
+    KUBECONFIG: "/etc/kubernetes/admin.conf"
+
+  tasks:
+
+    - name: Add ingress-nginx Helm repository
+      ansible.builtin.command: >
+        helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+      args:
+        creates: /root/.cache/helm/repository/ingress-nginx-index.yaml
+
+    - name: Update Helm repositories
+      ansible.builtin.command: helm repo update
+
+    - name: Create namespace if not exists
+      ansible.builtin.command: kubectl create namespace {{ ingress_namespace }}
+      register: ns
+      failed_when: false
+      changed_when: "'created' in ns.stdout"
+
+    - name: Install ingress-nginx via helm CLI
+      ansible.builtin.command: >
+        helm upgrade --install {{ ingress_release }}
+        {{ ingress_chart }}
+        --namespace {{ ingress_namespace }}
+        --create-namespace
+        --wait
+        --set controller.service.type=LoadBalancer
+        --set controller.admissionWebhooks.enabled=true
+
+    - name: Wait for ingress controller pods to exist
+      kubernetes.core.k8s_info:
+        kind: Pod
+        namespace: "{{ ingress_namespace }}"
+        label_selectors:
+          - app.kubernetes.io/component=controller
+      register: ingress_pods
+      until: ingress_pods.resources | length > 0
+      retries: 30
+      delay: 5
+
+    - name: Wait for ingress controller pods to be Ready
+      kubernetes.core.k8s_info:
+        kind: Pod
+        namespace: "{{ ingress_namespace }}"
+        label_selectors:
+          - app.kubernetes.io/component=controller
+      register: ingress_ready
+      until: >
+        ingress_ready.resources |
+        map(attribute='status.containerStatuses') |
+        list | flatten |
+        selectattr('ready') | list | length ==
+        ingress_ready.resources | length
+      retries: 40
+      delay: 5
+
+    - name: Wait for ingress-nginx LoadBalancer service to get an external IP
+      kubernetes.core.k8s_info:
+        kind: Service
+        namespace: "{{ ingress_namespace }}"
+        name: "{{ ingress_release }}-controller"
+      register: ingress_svc
+      until: ingress_svc.resources[0].status.loadBalancer.ingress is defined and
+             ingress_svc.resources[0].status.loadBalancer.ingress | length > 0
+      retries: 40
+      delay: 5
+
+    - name: Show assigned ingress LoadBalancer IP
+      ansible.builtin.debug:
+        msg: "Ingress LoadBalancer IP: {{ ingress_svc.resources[0].status.loadBalancer.ingress[0].ip }}"

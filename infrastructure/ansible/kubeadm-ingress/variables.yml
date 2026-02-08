@@ -1,0 +1,3 @@
+    ingress_namespace: ingress-nginx
+    ingress_release: ingress-nginx
+    ingress_chart: ingress-nginx/ingress-nginx
