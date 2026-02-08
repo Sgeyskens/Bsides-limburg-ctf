@@ -1,11 +1,19 @@
----
 - name: Deploy HAProxy on Ubuntu
   hosts: haproxy
   become: yes
-  gather_facts: yes
+
+  vars:
+    haproxy_frontend_port: 6443
 
   tasks:
-    - name: Update apt cache
+    - name: Wait for apt lock to be released
+      shell: |
+        while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
+          sleep 3
+        done
+      changed_when: false
+
+    - name: Update apt package cache
       apt:
         update_cache: yes
         cache_valid_time: 3600
@@ -16,20 +24,26 @@
           - haproxy
           - ufw
         state: present
-      tags: [install]
 
-    - name: Ensure UFW is enabled
+    - name: Enable UFW firewall
       ufw:
         state: enabled
 
-    - name: Allow HAProxy frontend port
+    - name: Allow SSH through UFW
       ufw:
         rule: allow
-        port: "6443"
+        port: "22"
         proto: tcp
-      notify: Reload UFW
-      tags: [firewall]
 
+    - name: Allow HAProxy frontend port through UFW
+      ufw:
+        rule: allow
+        port: "{{ haproxy_frontend_port }}"
+        proto: tcp
+
+    - name: Enable UFW firewall
+      ufw:
+        state: enabled
 
     - name: Deploy HAProxy configuration
       template:
@@ -39,8 +53,7 @@
         group: root
         mode: '0644'
       notify:
-        - Validate HAProxy config
-      tags: [config]
+        - Validate HAProxy configuration
 
     - name: Ensure HAProxy service is enabled and running
       systemd:
@@ -48,26 +61,24 @@
         enabled: yes
         state: started
         masked: no
-      tags: [service]
-
-    - name: Wait until HAProxy frontend is responding
-      wait_for:
-        host: "{{ inventory_hostname }}"
-        port: 6443
-        delay: 2
-        timeout: 30
-        state: started
-        
-  handlers:
-    - name: Validate HAProxy config
-      command: haproxy -c -f /etc/haproxy/haproxy.cfg
-      notify: Restart HAProxy
-
-    - name: Restart HAProxy
+    
+    - name: Restart HAProxy service
       systemd:
         name: haproxy
-        state: reloaded
+        state: restarted
 
-    - name: Reload UFW
-      ufw:
-        state: reloaded
+    - name: Wait for HAProxy frontend to become available
+      wait_for:
+        host: 127.0.0.1
+        port: "{{ haproxy_frontend_port }}"
+        timeout: 30
+
+  handlers:
+    - name: Validate HAProxy configuration
+      command: haproxy -c -f /etc/haproxy/haproxy.cfg
+      changed_when: false
+
+    - name: Restart HAProxy service
+      systemd:
+        name: haproxy
+        state: restarted

@@ -36,7 +36,7 @@ defaults
     errorfile 504 /etc/haproxy/errors/504.http
 
 frontend k8s-api-frontend
-    bind *:6443
+    bind *:{{ haproxy_frontend_port }}
     mode tcp
     option tcplog
     default_backend k8s-control-plane
@@ -51,7 +51,7 @@ backend k8s-control-plane
     # Disable certificate verification for all servers
     default-server verify none
 
-{% for host in groups['Masters'] | default([]) %}
+{% for host in groups['masters'] | default([]) %}
     server {{ host }} {{ hostvars[host]['ansible_host'] | default(host) }}:6443 check
 {% endfor %}
 
