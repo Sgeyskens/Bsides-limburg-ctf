@@ -80,15 +80,3 @@ mariadb:
   password: ctfdpassword
   database: ctfd
 ```
-
----
-
-### 3️⃣ Recommendation
-
-For a **self-contained deployment**, the easiest is **Option A**, i.e., add MariaDB as a dependency to your CTFd Helm chart. That way:
-
-* CTFd, Redis, and MariaDB are all deployed together.
-* Persistent storage is managed via PVCs.
-* Everything can be upgraded as one Helm release.
-
----

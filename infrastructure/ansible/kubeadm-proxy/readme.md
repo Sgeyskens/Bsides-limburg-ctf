@@ -13,22 +13,22 @@ Ansible playbook to deploy HAProxy as a load balancer for a kubeadm HA Kubernete
 * Ubuntu host for HAProxy
 * Ansible inventory defining:
 
-  * `HAProxy` (load balancer)
-  * `Masters` (control plane nodes)
+  * `haproxy` (load balancer)
+  * `masters` (control plane nodes)
 
 Example:
 
 ```ini
-[Masters]
+[asters]
 192.168.1.10
 192.168.1.11
 192.168.1.12
 
-[Workers]
+[workers]
 192.168.1.20
 192.168.1.21
 
-[HAProxy]
+[haproxy]
 192.168.1.30
 ```
 

@@ -9,9 +9,6 @@ The setup uses:
 - Calico as CNI (configurable)
 - External control-plane endpoint (e.g., via HAProxy)
 
-**Important**: The playbook **only initializes the first control-plane** automatically.  
-Additional control-plane nodes and all workers are joined **manually** (recommended for reliability and to avoid etcd learner races/promotion issues)
-
 ## Cluster Overview
 
 - **Control-plane nodes**: 3 (recommended odd number for etcd quorum)
@@ -21,38 +18,8 @@ Additional control-plane nodes and all workers are joined **manually** (recommen
 - **Container runtime**: containerd
 - : Calico (via `https://docs.projectcalico.org/manifests/calico.yaml`)
 
-## Prerequisites
-
-- Proxmox VMs (Debian 12 / Ubuntu 22.04+ recommended)
-- All nodes:
-    - SSH access from your Ansible controller
-    - Static IPs
-    - Time synchronized (NTP/chrony)
-    - Swap disabled
-    - Firewall ports open (see kubeadm docs)
-    - Inventory file (`inventory.ini`) with groups:
-    
-    ```jsx
-    [masters]
-    192.168.1.[10:12]
-    
-    [workers]
-    192.168.1.[20:22]
-    
-    [haproxy]
-    192.168.1.30
-    
-    [k8s_cluster:children]
-    masters
-    workers
-    
-    [all:vars]
-    ansible_user=root
-    ```
-    
-
 ## Deploy Ansible
 
 ```bash
-ansible-playbook -i inventory.ini playbook.yml
+ansible-playbook playbook.yml
 ```

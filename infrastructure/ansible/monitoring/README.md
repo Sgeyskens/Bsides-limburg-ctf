@@ -34,7 +34,7 @@ This Ansible playbook automates the deployment of **Prometheus**, **Grafana**, a
 2. Run the playbook with:
 
 ```bash
-ansible-playbook -i inventory.ini playbook.yml
+ansible-playbook playbook.yml
 ```
 
 * Ensure the inventory contains the control plane node in the `control_plane` group.
