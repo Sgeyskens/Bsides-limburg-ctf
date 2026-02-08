@@ -1,0 +1,6 @@
+kubernetes_version: "1.35.0"
+kubernetes_version_minor: "1.35"
+pod_network_cidr: "10.8.0.0/16"
+control_plane_endpoint: "192.168.1.30:6443"
+cni_manifest: "https://docs.projectcalico.org/manifests/calico.yaml"
+container_runtime: containerd

@@ -102,6 +102,8 @@ curl -k https://<haproxy-ip>:6443/healthz
 
   ```bash
   sudo journalctl -u haproxy -f
+
+  ss -tulpn | grep 6443
   ```
 
 ---
