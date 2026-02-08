@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block stylesheets %}
+  {{ super() }}
+  <style>
+    .friday-13-bg {
+      background: #070707;
+      background-image:
+        radial-gradient(circle at 10% 15%, rgba(176, 0, 32, 0.18), transparent 40%),
+        radial-gradient(circle at 85% 35%, rgba(176, 0, 32, 0.12), transparent 45%);
+      min-height: 100vh;
+      padding-bottom: 2.5rem;
+    }
+    .friday-13-challenge {
+      background:
+        linear-gradient(160deg, rgba(176, 0, 32, 0.18), transparent 55%),
+        linear-gradient(180deg, #111 0%, #070707 100%);
+      border: 1px solid #4a0c16;
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.5);
+      clip-path: polygon(0 0, 96% 0, 100% 8%, 100% 100%, 4% 100%, 0 92%);
+      color: #f8d7da;
+    }
+    .friday-13-challenge:hover,
+    .friday-13-challenge:focus {
+      border-color: #ff4d5e;
+      box-shadow: 0 0 0 2px rgba(176, 0, 32, 0.35), 0 12px 28px rgba(0, 0, 0, 0.55);
+      transform: translateY(-2px);
+    }
+    .challenge-solved.friday-13-challenge {
+      background:
+        linear-gradient(160deg, rgba(0, 176, 32, 0.15), transparent 55%),
+        linear-gradient(180deg, #0a1a0a 0%, #050a05 100%);
+      border-color: #1a6b2e;
+      box-shadow: inset 0 0 0 1px rgba(32, 176, 64, 0.25);
+    }
+    .challenge-solved.friday-13-challenge .challenge-inner {
+      color: #c8f5d8;
+    }
+    .challenge-solved.friday-13-challenge .challenge-inner span {
+      color: #4dff6e;
+    }
+    .jumbotron {
+      background-color: transparent !important;
+    }
+    .friday-13-challenge .challenge-inner {
+      color: #f1d2d7;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .friday-13-challenge .challenge-inner span {
+      color: #ff4d5e;
+      font-weight: 700;
+    }
+    .friday-13-challenge p {
+      margin-bottom: 0.35rem;
+      font-weight: 600;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="friday-13-bg">
+    <div class="jumbotron friday-13-hero">
+      <div class="container">
+        <h1>
+          {% trans %}Challenges{% endtrans %}
+        </h1>
+      </div>
+    </div>
+
+    <div class="container friday-13-page">
+      <div class="alert alert-warning" role="alert">
+        <strong>Warning:</strong> This website contains jump scares and flashing visuals that may trigger seizures or discomfort
+        in individuals with photosensitive epilepsy. You can disable jump scares using the button in the bottom-left corner of
+        the page.
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          {% include "components/errors.html" %}
+        </div>
+      </div>
+
+    <div 
+      x-data="ChallengeBoard" 
+      @load-challenges.window="loadChallenges()" 
+      @load-challenge.window="loadChallenge($event.detail)"
+    >
+      <div
+          x-ref="challengeWindow" id="challenge-window" class="modal fade" tabindex="-1" role="dialog" x-data=""
+          x-html="$store.challenge.data.view"
+      ></div>
+
+      <div x-show="!loaded">
+        <div class="min-vh-50 d-flex align-items-center">
+          <div class="text-center w-100">
+            <i class="fas fa-circle-notch fa-spin fa-3x fa-fw spinner"></i>
+          </div>
+        </div>
+      </div>
+
+      <div x-show="loaded">
+        <template x-for="(category, idx) in getCategories()" :key="idx">
+          <div class="pt-5">
+            <div class="category-header mb-3">
+              <h3 x-text="category"></h3>
+            </div>
+
+            <div class="category-challenges d-flex flex-column">
+              <div class="challenges-row row">
+                <template x-for="(c, idx) in getChallenges(category)" :key="c.id">
+                  <div class="col-sm-6 col-md-4 col-lg-3 my-3">
+                    <button
+                        class="challenge-button btn btn-dark w-100 h-100 friday-13-challenge"
+                        :class="[
+                          c.solved_by_me ? 'challenge-solved' : '',
+                          ...c.tags.map((tag) => `tag-${tag.value.replace(/ /g, '-')}`),
+                        ];"
+                        :value="c.id" @click="loadChallenge(c.id)"
+                    >
+
+                      <div class="challenge-inner my-3">
+                        <p x-text="c.name"></p>
+                        <span x-text="c.value"></span>
+                      </div>
+                    </button>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  {{ Assets.js("assets/js/challenges.js") }}
+{% endblock %}

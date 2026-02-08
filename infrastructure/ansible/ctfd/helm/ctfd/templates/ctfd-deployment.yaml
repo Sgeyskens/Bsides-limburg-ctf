@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ctfd.fullname" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "ctfd.fullname" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "ctfd.fullname" . }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+
+    spec:
+      terminationGracePeriodSeconds: 30
+
+      imagePullSecrets:
+        - name: gitlab-registry
+
+      securityContext:
+        fsGroup: 1000
+
+      containers:
+        - name: ctfd
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+
+          envFrom:
+            - configMapRef:
+                name: {{ include "ctfd.fullname" . }}-config
+
+          env:
+            - name: CTFD_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ctfd.fullname" . }}-secret
+                  key: CTFD_SECRET_KEY
+
+            - name: CTFD_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ if .Values.mariadb.existingSecret }}{{ .Values.mariadb.existingSecret }}{{ else }}{{ include "ctfd.fullname" . }}-secret{{ end }}
+                  key: {{ if .Values.mariadb.existingSecret }}{{ .Values.mariadb.existingSecretKey }}{{ else }}CTFD_DATABASE_PASSWORD{{ end }}
+
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+
+          volumeMounts:
+            - name: uploads
+              mountPath: /var/uploads
+
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 10
+
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+
+      volumes:
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: {{ if .Values.persistence.existingClaim }}{{ .Values.persistence.existingClaim }}{{ else }}{{ include "ctfd.fullname" . }}-uploads{{ end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ctfd.fullname" . }}
+  labels:
+    app: {{ include "ctfd.fullname" . }}
+  {{- if .Values.service.annotations }}
+  annotations:
+    {{- toYaml .Values.service.annotations | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app: {{ include "ctfd.fullname" . }}
+  ports:
+    - name: http
+      port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.targetPort | default 8000 }}
+      protocol: TCP

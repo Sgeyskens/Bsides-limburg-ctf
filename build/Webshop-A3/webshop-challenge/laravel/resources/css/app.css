@@ -1,0 +1,21 @@
+@import "tailwindcss";
+@import "./friday13.css";
+
+/* Cap content at lg breakpoint - xl and 2xl screens look like lg */
+@media (min-width: 1280px) {
+    .max-w-6xl,
+    main.max-w-7xl {
+        max-width: 1024px !important;
+    }
+}
+
+/* Override browser autofill styling */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+    -webkit-text-fill-color: white !important;
+    transition: background-color 5000s ease-in-out 0s;
+    background-color: transparent !important;
+}

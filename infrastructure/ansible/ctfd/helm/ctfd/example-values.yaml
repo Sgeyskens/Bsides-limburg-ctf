@@ -1,0 +1,66 @@
+image:
+  repository: registry.gitlab.com/it-factory-thomas-more/skil3/25-26/bsides-ctf/challenges/a3/ctfd-a3
+  tag: latest
+  pullPolicy: Always
+
+replicaCount: 1
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  className: ""
+  hosts:
+    - host: ctfd.local
+      path: /
+  tls: []
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+  
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+redis:
+  enabled: true
+  image: redis:7-alpine
+  port: 6379
+  resources: {}
+
+mariadb:
+  # We assume an external MariaDB instance
+  host: mariadb.default.svc.cluster.local
+  port: 3306
+  database: ctfd
+  username: ctfd
+  password: changeme
+  # If you want to use a Kubernetes Secret instead, override below
+  existingSecret: ""
+  existingSecretKey: password
+
+ctfd:
+  secretKey: "FLG1#H%F7#fv18I@zN7$GCk2#haXF@0S#&&!r0Xc"
+  # CTFd config environment
+  # See CTFd docs for more options
+  workers: 4
+  logLevel: "INFO"
+
+persistence:
+  enabled: true
+  storageClassName: "longhorn"   # must match your Longhorn StorageClass
+  accessModes:
+    - ReadWriteOnce
+  size: 5Gi
+  existingClaim: ""               # set if you want to use a pre-created PVC
+
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

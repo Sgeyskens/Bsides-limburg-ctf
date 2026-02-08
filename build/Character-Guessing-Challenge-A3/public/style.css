@@ -1,0 +1,92 @@
+body {
+  font-family: Arial, sans-serif;
+  background-image: url('img/wp1852259-friday-the-13th-wallpapers.jpg');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+}
+
+.container {
+  background-color: rgba(255, 255, 255, 0.8);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.game-wrapper {
+  display: flex;
+  gap: 30px;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.hangman-display {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  white-space: pre;
+  line-height: 1.2;
+  color: #333;
+  min-width: 150px;
+}
+
+.game-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.word-display {
+  font-size: 24px;
+  margin: 20px 0;
+  letter-spacing: 2px;
+  font-family: 'Courier New', monospace;
+}
+
+.wrong-count {
+  font-size: 18px;
+  margin-bottom: 20px;
+  font-weight: bold;
+  color: #d9534f;
+}
+
+.guess-section {
+  margin: 20px 0;
+}
+
+#guess-input {
+  padding: 10px;
+  font-size: 18px;
+  width: 50px;
+  text-align: center;
+}
+
+#guess-btn {
+  padding: 10px 20px;
+  font-size: 18px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#guess-btn:hover {
+  background-color: #45a049;
+}
+
+#guess-btn:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.feedback {
+  margin-top: 20px;
+  font-size: 18px;
+  font-weight: bold;
+}

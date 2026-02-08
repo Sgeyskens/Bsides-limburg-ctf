@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="nl">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Run from Jason</title>
+  <link rel="icon" type="image/x-icon" href="/media/startscreen.ico" />
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+
+<body>
+
+  <button id="leaderboard-btn">LEADERBOARD</button>
+
+  <div id="leaderboard-modal" class="hidden">
+    <div class="modal-content">
+
+      <div class="leaderboard-header">
+        <div class="leaderboard-title">TOP SURVIVORS</div>
+      </div>
+
+      <div id="leaderboard-list"></div>
+
+      <button id="close-leaderboard">CLOSE</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div class="game-wrapper">
+      <canvas id="gameCanvas"></canvas>
+
+      <div class="info">
+        <p><strong>Controls:</strong> Space = Jump</p>
+      </div>
+    </div>
+  </div>
+
+  <button id="ctf-claim-btn" class="hidden">
+    CLAIM YOUR REWARD
+  </button>
+
+  <div id="highscore-hint">
+    <div class="glitch-group" data-text="He who exceeds The FinalCounselor leaves with something special..."></div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+
+</html>

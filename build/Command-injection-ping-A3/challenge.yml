@@ -1,0 +1,31 @@
+name: "Crystal Ping"
+author: "Volo"
+category: "Web"
+description: |
+  A simple connectivity checker allows users to ping a host.
+
+  The application claims to validate user input, but something feels off.
+
+  URL: http://192.168.159.130:8080
+
+  Hint: Not all validation actually protects the shell.
+
+value: 200
+type: standard
+
+flags:
+  - type: static
+    content: ctf{ping_is_not_input_validation}
+    data: case_insensitive
+
+hints:
+  - content: "What happens if input reaches the OS shell?"
+  - content: "Does filtering input always mean it is safe?"
+
+tags:
+  - web
+  - command-injection
+  - input-validation
+
+state: visible
+version: "0.1"

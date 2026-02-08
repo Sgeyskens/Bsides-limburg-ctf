@@ -1,0 +1,15 @@
+services:
+  ping-injection:
+    build: .
+    container_name: ping-injection
+    ports:
+      - "8080:5000"
+    restart: unless-stopped
+    environment:
+      - PYTHONUNBUFFERED=1
+    # Optional stability limits (recommended for CTF infra)
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: "256M"

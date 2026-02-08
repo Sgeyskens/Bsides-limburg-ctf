@@ -1,0 +1,19 @@
+name: Camp Crystal Lake Access Badge
+category: Web
+value: 100
+description: |
+  🪓 **Camp Crystal Lake — Staff Terminal**
+  
+  The night shift terminal claims you're just a guest.
+  Rangers insist only authorized staff can open the Equipment Locker.
+
+  Your task:
+  - Gain access to the staff terminal.
+  - Reach the locker screen and recover the flag.
+
+  **URL:** http://192.168.159.130:8085/
+
+  Hint: The “security” feels… suspiciously client-side.
+flags:
+  - ctf{client_side_auth_is_not_security}
+state: visible

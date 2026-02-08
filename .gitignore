@@ -22,3 +22,6 @@
 
 # Terraform plan files
 **/*tfplan*
+
+# helm
+**/helm/ctfd/Values.yaml

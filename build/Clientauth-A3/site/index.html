@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Camp Crystal Lake — Staff Terminal</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="fog"></div>
+  <div class="vignette"></div>
+
+  <main class="card">
+    <header class="header">
+      <div class="badge">
+        <div class="badge__top">CAMP</div>
+        <div class="badge__mid">CRYSTAL LAKE</div>
+        <div class="badge__bot">STAFF TERMINAL</div>
+      </div>
+      <p class="sub">“Authorized personnel only.” The sign looks freshly scratched.</p>
+    </header>
+
+    <section id="status" class="status">Checking access…</section>
+
+    <div class="controls">
+      <button id="loginBtn" type="button">Claim Staff Badge</button>
+      <button id="logoutBtn" type="button" class="secondary">Drop Badge</button>
+    </div>
+
+    <hr />
+
+    <section id="memberArea" class="hidden">
+      <h2>Night Shift Notes</h2>
+      <ul class="notes">
+        <li>Patrol path: dock → cabins → generator.</li>
+        <li>Do not enter the old shack alone.</li>
+        <li>If you hear breathing behind you, don’t turn around.</li>
+      </ul>
+      <p class="muted small">Locker access requires elevated clearance.</p>
+    </section>
+
+    <section id="adminArea" class="hidden">
+      <h2>Equipment Locker</h2>
+      <p class="muted">Locker seal disengaged. Contents:</p>
+      <div class="locker">
+        <div class="locker__label">EVIDENCE TAG</div>
+        <p class="flag" id="flagBox"></p>
+      </div>
+    </section>
+
+    <p class="hint">Hint: This “terminal” trusts what your browser tells it.</p>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

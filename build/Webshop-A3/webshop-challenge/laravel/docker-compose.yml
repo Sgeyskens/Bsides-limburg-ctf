@@ -1,0 +1,32 @@
+services:
+  app:
+    build: .
+    container_name: laravel_app
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/var/www/html
+      - /var/www/html/vendor
+      - /var/www/html/node_modules
+    environment:
+      APACHE_RUN_USER: www-data
+      APACHE_RUN_GROUP: www-data
+    command: >
+      bash -c "
+      composer install --no-dev --optimize-autoloader &&
+      npm install && npm run build &&
+      rm -f /var/www/html/public/hot &&
+      if [ ! -f .env ]; then
+        cp .env.example .env &&
+        php artisan key:generate --force;
+      fi &&
+      mkdir -p /var/www/html/database &&
+      touch /var/www/html/database/database.sqlite &&
+      chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database &&
+      chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database &&
+      chmod 666 /var/www/html/database/database.sqlite &&
+      php artisan migrate --force &&
+      php artisan db:seed --force &&
+      php artisan cache:clear &&
+      apache2-foreground
+      "

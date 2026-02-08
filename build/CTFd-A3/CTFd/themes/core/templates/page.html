@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="container">
+    {% if request.path == "/" %}
+      <div class="alert alert-warning" role="alert">
+        <strong>Warning:</strong> This website contains jump scares and flashing visuals that may trigger seizures or discomfort
+        in individuals with photosensitive epilepsy. You can disable jump scares using the button in the bottom-left corner of
+        the page.
+      </div>
+    {% endif %}
+    {{ content | safe }}
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  {{ Assets.js("assets/js/page.js") }}
+{% endblock %}

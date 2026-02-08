@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(php artisan tinker:*)",
+      "Bash(php artisan migrate:fresh:*)",
+      "Bash(mysql:*)",
+      "Bash(php artisan db:show:*)",
+      "Bash(sqlite3:*)",
+      "WebSearch",
+      "Bash(php artisan:*)",
+      "Bash(dir:*)",
+      "Bash(ls:*)",
+      "Bash(npm run dev:*)",
+      "Bash(del \"C:\\\\sites_laravel\\\\webshop-A3\\\\webshop-challenge\\\\laravel\\\\bootstrap\\\\cache\\\\config.php\")",
+      "Bash(php -r:*)",
+      "WebFetch(domain:www.themoviedb.org)",
+      "WebFetch(domain:www.igdb.com)",
+      "WebFetch(domain:rawg.io)",
+      "Bash(npm run build:*)",
+      "Bash(npx vite build)",
+      "Bash(node_modules/.bin/vite build)",
+      "Bash(echo:*)",
+      "Bash(node node_modules/vite/bin/vite.js build:*)",
+      "Bash(tree:*)",
+      "Bash(powershell -Command \"\\(Get-Item ''C:\\\\sites_laravel\\\\webshop-A3\\\\webshop-challenge\\\\laravel\\\\Dockerfile''\\).Length\")",
+      "Bash(php -l:*)",
+      "Bash(node --check:*)",
+      "Bash(curl:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(del testsUnitExampleTest.php testsFeatureExampleTest.php)",
+      "Bash(vendor\\\\bin\\\\phpunit:*)",
+      "Bash(php vendor/phpunit/phpunit/phpunit:*)",
+      "Bash(php vendor/bin/phpunit:*)"
+    ]
+  }
+}

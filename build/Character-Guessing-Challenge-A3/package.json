@@ -1,0 +1,15 @@
+{
+  "name": "character-guessing-challenge",
+  "version": "1.0.0",
+  "description": "A character guessing game with hot/cold feedback using Node.js",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.22.1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

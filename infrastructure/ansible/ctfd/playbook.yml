@@ -1,0 +1,233 @@
+---
+- name: Deploy CTFd on kubeadm HA cluster
+  hosts: masters[0]
+  gather_facts: false
+  vars_files:
+    - variables.yml
+
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+  tasks:
+
+#####################################################################
+# LONGHORN (idempotent + CRD-safe)
+#####################################################################
+
+  - name: Check if Longhorn CRDs exist
+    ansible.builtin.command: kubectl get crd nodes.longhorn.io
+    register: longhorn_crd_check
+    failed_when: false
+    changed_when: false
+
+  - name: Deploy Longhorn (only if not installed)
+    ansible.builtin.command: >
+      kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/master/deploy/longhorn.yaml
+    when: longhorn_crd_check.rc != 0
+    register: longhorn_install
+    changed_when: "'created' in longhorn_install.stdout or 'configured' in longhorn_install.stdout"
+
+  - name: Wait for Longhorn CRDs to be established
+    ansible.builtin.command: >
+      kubectl wait --for=condition=Established crd/nodes.longhorn.io --timeout=120s
+    when: longhorn_crd_check.rc != 0
+
+  - name: Wait for Longhorn pods to be ready
+    ansible.builtin.command: >
+      kubectl wait -n {{ longhorn_namespace }}
+      --for=condition=Ready pod
+      --all
+      --timeout=600s
+    when: longhorn_crd_check.rc != 0
+
+  - name: Verify Longhorn StorageClass exists
+    ansible.builtin.command: kubectl get storageclass
+    register: sc
+    changed_when: false
+
+  - name: Display available StorageClasses
+    ansible.builtin.debug:
+      var: sc.stdout
+
+  #####################################################################
+  # NAMESPACE
+  #####################################################################
+
+  - name: Create namespace
+    ansible.builtin.command: kubectl create namespace {{ ctfd_namespace }}
+    register: ns
+    changed_when: "'created' in ns.stdout" 
+    failed_when: false
+
+  #####################################################################
+  # HELM REPOSITORIES
+  #####################################################################
+
+  - name: Add Bitnami Helm repo
+    ansible.builtin.command: helm repo add bitnami https://charts.bitnami.com/bitnami
+    changed_when: false
+
+  - name: Update Helm repos
+    ansible.builtin.command: helm repo update
+    changed_when: false
+
+#####################################################################
+# MariaDB
+#####################################################################
+
+  - name: Deploy MariaDB (Bitnami) for CTFd
+    ansible.builtin.command: >
+      helm upgrade --install {{ mariadb.release_name | default('mariadb') }} bitnami/mariadb
+      --namespace {{ ctfd_namespace }}
+      --set auth.rootPassword={{ mariadb.root_password | default('rootpassword') }}
+      --set auth.database={{ mariadb.database | default('ctfd') }}
+      --set auth.username={{ mariadb.user | default('ctfd') }}
+      --set auth.password={{ mariadb.password | default('ctfdpassword') }}
+      --set primary.persistence.enabled=true
+      --set primary.persistence.storageClass={{ storage.class_name }}
+      --set primary.persistence.size={{ mariadb.storage | default('10Gi') }}
+      --timeout 10m
+
+  - name: Wait for MariaDB to be ready
+    ansible.builtin.command: >
+      kubectl wait -n {{ ctfd_namespace }}
+      --for=condition=ready pod
+      --selector=app.kubernetes.io/name={{ mariadb.release_name }}
+      --timeout=600s
+
+
+    #####################################################################
+    # CTFd - Deploy custom Helm chart (Redis + external MariaDB + Longhorn)
+    #####################################################################
+  - name: Remove old chart from remote host
+    ansible.builtin.file:
+      path: /tmp/ctfd-chart/
+      state: absent
+
+  - name: Copy custom CTFd Helm chart to remote host
+    ansible.builtin.copy:
+      src: "{{ playbook_dir }}/helm/ctfd/"
+      dest: "/tmp/ctfd-chart/"
+
+  - name: Create GitLab registry imagePullSecret
+    kubernetes.core.k8s:
+      state: present
+      namespace: ctfd
+      definition:
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: gitlab-registry
+        type: kubernetes.io/dockerconfigjson
+        data:
+          .dockerconfigjson: "{{ {
+            'auths': {
+              'registry.gitlab.com': {
+                'username': 'team-a3',
+                'password': 'gldt-hwPDSQrnAhd3fJsx2UUH',
+                'auth': ('team-a3:gldt-hwPDSQrnAhd3fJsx2UUH') | b64encode
+              }
+            }
+          } | to_json | b64encode }}"
+    vars:
+      gitlab_username: "{{ lookup('env', 'GITLAB_USERNAME') }}"
+      gitlab_token: "{{ lookup('env', 'GITLAB_TOKEN') }}"
+
+
+  - name: Deploy/upgrade CTFd using custom Helm chart
+    ansible.builtin.command: >
+      helm upgrade --install {{ ctfd.release_name }}
+      /tmp/ctfd-chart/
+      --namespace {{ ctfd_namespace }}
+      --set image.repository=registry.gitlab.com/it-factory-thomas-more/skil3/25-26/bsides-ctf/challenges/a3/ctfd-a3
+      --set image.tag=latest
+      --set redis.enabled=true
+      --set redis.image=redis:7-alpine
+      --set mariadb.host={{ mariadb.release_name }}-mariadb
+      --set mariadb.port=3306
+      --set mariadb.database={{ mariadb.database }}
+      --set mariadb.username={{ mariadb.user }}
+      --set mariadb.password={{ mariadb.password }}
+      --set persistence.enabled=true
+      --set persistence.storageClass={{ storage.class_name }}
+      --set persistence.size=8Gi
+      --set service.type={{ ctfd.service_type }}
+      --timeout 15m
+    register: ctfd_helm
+    changed_when: ctfd_helm.rc == 0 and ('configured' in ctfd_helm.stdout or 'installed' in ctfd_helm.stdout)
+    failed_when: ctfd_helm.rc != 0
+
+  - name: Wait for CTFd deployment to be available
+    ansible.builtin.command: >
+      kubectl wait --namespace {{ ctfd_namespace }}
+      --for=condition=Available deployment/{{ ctfd.release_name }}
+      --timeout=600s
+
+  - name: Wait for CTFd pods to be ready
+    ansible.builtin.command: >
+      kubectl wait --namespace {{ ctfd_namespace }}
+      --for=condition=Ready pod
+      --selector=app={{ ctfd.release_name }}
+      --timeout=600s
+
+  - name: Wait for Redis pods to be ready (if internal)
+    ansible.builtin.command: >
+      kubectl wait --namespace {{ ctfd_namespace }}
+      --for=condition=Ready pod
+      --selector=app={{ ctfd.release_name }}-redis
+      --timeout=300s
+    ignore_errors: true
+
+  - name: Show CTFd access info
+    ansible.builtin.debug:
+      msg: |
+        CTFd should be available soon at:
+        http://{{ external_ip.stdout | default('EXTERNAL-IP-PENDING (wait 1-2 min for MetalLB)') }}
+
+        Check status:
+        kubectl get all -n {{ ctfd_namespace }}
+
+        Pod logs if issues:
+        kubectl logs -n {{ ctfd_namespace }} -l app.kubernetes.io/name=ctfd -f
+
+
+  - name: Add Jetstack Helm repository
+    ansible.builtin.command: >
+      helm repo add jetstack https://charts.jetstack.io
+    args:
+      creates: /root/.cache/helm/repository/jetstack-index.yaml
+
+  - name: Update Helm repositories
+    ansible.builtin.command: helm repo update
+
+  - name: Create namespace if not exists
+    ansible.builtin.command: kubectl create namespace {{ cert_namespace }}
+    register: ns
+    failed_when: false
+    changed_when: "'created' in ns.stdout"
+
+  - name: Install cert-manager via Helm CLI
+    ansible.builtin.command: >
+      helm upgrade --install {{ cert_release }} {{ cert_chart }} \
+        --namespace {{ cert_namespace }} \
+        --set installCRDs=true \
+        --wait
+        
+  - name: Wait for cert-manager webhook to be ready
+    ansible.builtin.command: >
+      kubectl wait --namespace cert-manager
+      --for=condition=Ready pod
+      -l app.kubernetes.io/component=webhook
+      --timeout=180s
+
+  - name: Copy letsencrypt-dns.yml to the master
+    ansible.builtin.copy:
+      src: ./deployment.yml
+      dest: /tmp/
+      owner: root
+      group: root
+      mode: '0644'
+
+  - name: Apply staging issuer and ingress
+    ansible.builtin.command: 
+      kubectl apply -f /tmp/deployment.yml

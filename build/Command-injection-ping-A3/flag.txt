@@ -1,0 +1,1 @@
+ctf{ping_is_not_input_validation}

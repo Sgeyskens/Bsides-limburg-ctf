@@ -1,0 +1,21 @@
+apiVersion: v2
+name: ctfd
+description: CTFd on Kubernetes with Redis, external MariaDB, and Longhorn storage
+type: application
+version: 0.1.0
+appVersion: "3.6.0"
+
+maintainers:
+  - name: A3
+
+keywords:
+  - ctfd
+  - ctf
+  - security
+  - challenges
+  - kubernetes
+
+home: https://github.com/CTFd/CTFd
+
+sources:
+  - https://github.com/CTFd/CTFd

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Character Guessing Challenge</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>Hangman Game</h1>
+        <div class="game-wrapper">
+            <div class="hangman-display" id="hangman-display"></div>
+            <div class="game-info">
+                <div class="word-display" id="word-display">Loading...</div>
+                <div class="wrong-count" id="wrong-count">Wrong guesses: 0/6</div>
+                <div class="guess-section">
+                    <input type="text" id="guess-input" maxlength="1" placeholder="?">
+                    <button id="guess-btn">Guess</button>
+                </div>
+                <div class="feedback" id="feedback"></div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>

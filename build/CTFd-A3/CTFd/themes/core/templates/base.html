@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{{ title or Configs.ctf_name }}</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="shortcut icon" href="{{ Configs.ctf_small_icon }}" type="image/x-icon">
+
+  {{ meta | safe }}
+
+  {% block stylesheets %}
+    {{ Assets.css("assets/scss/main.scss") }}
+  {% endblock %}
+
+  <style>
+    /* Friday the 13th Global Theme */
+    body {
+      background-color: #070707;
+      color: #e7e7e7;
+    }
+    main {
+      background-color: #070707;
+    }
+    nav.navbar,
+    .navbar,
+    header,
+    .navbar .dropdown-menu {
+      background-color: #0b0b0b !important;
+      background-image: none !important;
+      border-bottom: 1px solid #3a0b13 !important;
+    }
+    .navbar-dark,
+    .bg-dark {
+      background-color: #0b0b0b !important;
+    }
+    .navbar .nav-link,
+    .navbar .navbar-brand,
+    .navbar .dropdown-item {
+      color: #f1d2d7 !important;
+    }
+    .navbar .nav-link:hover,
+    .navbar .dropdown-item:hover {
+      color: #ff4d5e !important;
+    }
+    .footer {
+      background: #0b0b0b;
+      border-top: 1px solid #3a0b13;
+    }
+    .footer .text-muted,
+    .footer a {
+      color: #bda0a6 !important;
+    }
+    .jumbotron {
+      background-color: transparent !important;
+    }
+    .table {
+      color: #e7e7e7;
+    }
+    .table thead th {
+      background-color: #140208;
+      color: #f2f2f2;
+      border-bottom: 2px solid #3a0b13;
+    }
+    .table tbody tr {
+      border-color: #2a0a10;
+    }
+    .table tbody tr:hover {
+      background-color: rgba(176, 0, 32, 0.08);
+    }
+    .table tbody tr:nth-child(odd) {
+      background-color: rgba(20, 2, 8, 0.3);
+    }
+    .table-striped tbody tr:nth-of-type(odd) {
+      background-color: rgba(20, 2, 8, 0.5);
+    }
+  </style>
+
+  {{ Plugins.styles }}
+
+  {{ Assets.js("assets/js/color_mode_switcher.js", type=None) }}
+
+  <script type="text/javascript">
+      window.init = {
+          'urlRoot': "{{ request.script_root }}",
+          'csrfNonce': "{{ Session.nonce }}",
+          'userMode': "{{ Configs.user_mode }}",
+          'userId': {{ Session.id }},
+          'userName': {{ User.name | tojson }},
+          'userEmail': {{ User.email | tojson }},
+          'userVerified': {{ User.verified | tojson }},
+          'teamId': {{ Team.id | tojson }},
+          'teamName': {{ Team.name | tojson }},
+          'start': {{ Configs.start | tojson }},
+          'end': {{ Configs.end | tojson }},
+          'themeSettings': {{ Configs.theme_settings | tojson }},
+          'eventSounds': [
+            "/themes/core/static/sounds/notification.webm",
+            "/themes/core/static/sounds/notification.mp3",
+          ],
+      }
+  </script>
+
+  {{ Configs.theme_header }}
+</head>
+<body>
+{% include "components/navbar.html" %}
+
+<main role="main">
+  {% block content %}
+  {% endblock %}
+</main>
+
+{% include "components/snackbar.html" %}
+
+<footer class="footer">
+  <div class="container text-center">
+    <a href="https://ctfd.io" class="text-secondary">
+      <small class="text-muted">
+        {% trans %}Powered by CTFd{% endtrans %}
+      </small>
+    </a>
+  </div>
+</footer>
+
+{% include "components/notifications.html" %}
+
+{% block scripts %}
+  {{ Assets.js("assets/js/page.js") }}
+{% endblock %}
+
+{% if enable_jumpscare %}
+  {% include "jumpscare.html" %}
+{% endif %}
+
+{{ Plugins.scripts }}
+
+{{ Configs.theme_footer }}
+</body>
+</html>

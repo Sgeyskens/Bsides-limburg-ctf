@@ -1,0 +1,448 @@
+/* ================= FONT ================= */
+@font-face {
+  font-family: "RetroPixel";
+  src: url("/fonts/retro_pixel.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+html,
+body {
+  font-family: "RetroPixel", monospace;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeSpeed;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: inherit;
+  image-rendering: pixelated;
+}
+
+/* ================= BODY ================= */
+body {
+  background: radial-gradient(circle at top, #1a1a1a 0, #050509 60%, #000 100%);
+  color: #f5f5f5;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ================= FONT ================= */
+@font-face {
+  font-family: "RetroPixel";
+  src: url("/fonts/retro_pixel.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+html,
+body {
+  font-family: "RetroPixel", monospace;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeSpeed;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: inherit;
+  image-rendering: pixelated;
+}
+
+/* ================= BODY ================= */
+body {
+  background: radial-gradient(circle at top, #1a1a1a 0, #050509 60%, #000 100%);
+  color: #f5f5f5;
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('/media/forest_wallpaper.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.3;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ================= LAYOUT ================= */
+.layout {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 32px;
+}
+
+.game-wrapper {
+  text-align: center;
+}
+
+/* ================= CANVAS ================= */
+canvas {
+  display: block;
+  margin: 0 auto;
+  border-radius: 12px;
+  background: linear-gradient(to top, rgba(5, 5, 5, 0.85), rgba(16, 21, 32, 0.85));
+  box-shadow: 0 0 24px rgba(0, 0, 0, 0.8);
+  border: 2px solid rgba(255, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+}
+
+
+/* ================= LAYOUT ================= */
+.layout {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 32px;
+}
+
+.game-wrapper {
+  text-align: center;
+}
+
+/* ================= CANVAS ================= */
+canvas {
+  display: block;
+  margin: 0 auto;
+  border-radius: 12px;
+  background: linear-gradient(to top, #050505, #101520);
+  box-shadow: 0 0 24px rgba(0, 0, 0, 0.8);
+  border: 2px solid rgba(255, 0, 0, 0.4);
+}
+
+/* ================= INFO ================= */
+.info {
+  margin-top: 12px;
+  font-size: 14px;
+  color: #cccccc;
+}
+
+.info strong {
+  color: #ff4b4b;
+}
+
+/* ================= LEADERBOARD BUTTON ================= */
+#leaderboard-btn {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 1000;
+
+  font-size: 24px;
+  color: #ff0000;
+  background: black;
+  border: 3px solid #ff0000;
+  padding: 12px 18px;
+  cursor: pointer;
+
+  text-shadow: 2px 2px 0 #330000;
+}
+
+#leaderboard-btn:hover {
+  background: #220000;
+}
+
+/* ================= MODAL ================= */
+#leaderboard-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#leaderboard-modal.hidden {
+  display: none;
+}
+
+.modal-content {
+  width: 90vw;
+  max-width: 420px;
+  max-height: 70vh;
+  background: black;
+  border: 3px solid #ff0000;
+  padding: 16px;
+  text-align: center;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+/* ===== BLOODY HEADER ===== */
+.leaderboard-header {
+  position: relative;
+  margin: -16px -16px 16px;
+  padding: 16px 12px 28px;
+  background: #8b0000;
+  border-bottom: 4px solid #ff0000;
+}
+
+.leaderboard-header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -18px;
+  height: 32px;
+  background: url("/img/blood_pixel.png") repeat-x;
+  background-size: 64px 32px;
+}
+
+.leaderboard-title {
+  font-size: 18px;
+  letter-spacing: 2px;
+  color: #ffffff;
+  text-shadow: 2px 2px 0 #330000;
+}
+
+/* ================= LEADERBOARD LIST ================= */
+#leaderboard-list {
+  margin-top: 20px;
+  height: 36vh;
+  max-height: 360px;
+  min-height: 120px;
+  overflow-y: auto;
+  border-top: 1px solid #ff0000;
+  border-bottom: 1px solid #ff0000;
+}
+
+.leaderboard-entry {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 8px;
+  border-bottom: 1px solid #440000;
+  font-size: 14px;
+}
+
+.leaderboard-entry:first-child {
+  color: #ff0000;
+  text-shadow: 1px 1px 0 #330000;
+}
+
+.leaderboard-entry.final-counselor {
+  color: #ffff00;
+  background: rgba(255, 215, 0, 0.1);
+  border: 2px solid #ffff00;
+  border-bottom: 2px solid #ffff00;
+  padding: 6px 6px;
+  text-shadow: 0 0 8px #ffff00, 0 0 4px #ff6600;
+  box-shadow: inset 0 0 8px rgba(255, 215, 0, 0.3), 0 0 12px rgba(255, 215, 0, 0.2);
+  animation: finalCounselorGlow 2s ease-in-out infinite;
+}
+
+@keyframes finalCounselorGlow {
+  0%, 100% {
+    text-shadow: 0 0 8px #ffff00, 0 0 4px #ff6600;
+    box-shadow: inset 0 0 8px rgba(255, 215, 0, 0.3), 0 0 12px rgba(255, 215, 0, 0.2);
+  }
+  50% {
+    text-shadow: 0 0 16px #ffff00, 0 0 8px #ff6600;
+    box-shadow: inset 0 0 12px rgba(255, 215, 0, 0.5), 0 0 20px rgba(255, 215, 0, 0.4);
+  }
+}
+
+/* ================= CLOSE BUTTON ================= */
+#close-leaderboard {
+  margin-top: 12px;
+  background: black;
+  color: #ff0000;
+  border: 2px solid #ff0000;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+/* ================= HIGHSCORE HINT ================= */
+#highscore-hint {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: max(24px, env(safe-area-inset-bottom));
+  padding-bottom: 24px;
+  z-index: 999;
+  width: 100%;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* ================= GLITCH TEXT ================= */
+.glitch-group {
+  position: relative;
+  font-size: clamp(14px, 4vw, 28px);
+  letter-spacing: clamp(0.5px, 0.3vw, 2px);
+  line-height: 1.4;
+  color: #8b0000;
+  text-shadow: 2px 2px 0 #330000;
+  animation: flicker 2.4s infinite;
+  width: min(90vw, 720px);
+  margin: 0 auto;
+  white-space: normal;
+}
+
+.glitch-group::before,
+.glitch-group::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.glitch-group::before {
+  color: #ff0000;
+  animation: glitch-shift 1.4s infinite;
+}
+
+.glitch-group::after {
+  color: #ffffff;
+  animation: glitch-shift 2.1s infinite reverse;
+}
+
+/* ================= ANIMATIONS ================= */
+@keyframes glitch-shift {
+  0% {
+    transform: translate(0, 0);
+  }
+
+  20% {
+    transform: translate(-2px, 0);
+  }
+
+  40% {
+    transform: translate(2px, 0);
+  }
+
+  60% {
+    transform: translate(-1px, 1px);
+  }
+
+  80% {
+    transform: translate(1px, -1px);
+  }
+
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+@keyframes flicker {
+  0% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.35;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+/* ================= CTF CLAIM BUTTON ================= */
+#ctf-claim-btn {
+  position: fixed;
+  top: 10vh;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+
+  font-size: 20px;
+  padding: 12px 18px;
+
+  color: #ff0000;
+  background: black;
+  border: 3px solid #ff0000;
+  cursor: pointer;
+
+  text-shadow: 2px 2px 0 #330000;
+  box-shadow:
+    0 0 12px rgba(255, 0, 0, 0.4),
+    inset 0 0 12px rgba(255, 0, 0, 0.2);
+
+  animation: ctf-pulse 1.6s infinite;
+}
+
+/* Standaard verborgen */
+#ctf-claim-btn.hidden {
+  display: none;
+}
+
+/* Hover effect */
+#ctf-claim-btn:hover {
+  background: #220000;
+  box-shadow:
+    0 0 18px rgba(255, 0, 0, 0.7),
+    inset 0 0 18px rgba(255, 0, 0, 0.4);
+}
+
+/* Disabled state (optioneel, maar netjes) */
+#ctf-claim-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  animation: none;
+}
+
+@keyframes ctf-pulse {
+  0% {
+    box-shadow: 0 0 8px rgba(255, 0, 0, 0.3);
+  }
+
+  50% {
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.7);
+  }
+
+  100% {
+    box-shadow: 0 0 8px rgba(255, 0, 0, 0.3);
+  }
+}
+
+@media (max-width: 600px) {
+  .modal-content {
+    width: 98vw;
+    max-width: 98vw;
+    padding: 8px;
+    font-size: 15px;
+  }
+
+  #leaderboard-list {
+    height: 28vh;
+    max-height: 200px;
+    font-size: 13px;
+  }
+
+  .leaderboard-title {
+    font-size: 16px;
+  }
+
+  #close-leaderboard {
+    font-size: 15px;
+    padding: 4px 8px;
+  }
+}

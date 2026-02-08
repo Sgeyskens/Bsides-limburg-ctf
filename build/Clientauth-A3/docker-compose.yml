@@ -1,0 +1,13 @@
+services:
+  web:
+    build: .
+    container_name: client-side-auth
+    ports:
+      - "8085:80"
+    restart: unless-stopped
+
+
+
+
+
+
