@@ -100,7 +100,7 @@
 
     - name: Wait for all pods in all namespaces to be Ready
       ansible.builtin.command: >
-        kubectl get pods --all-namespaces --no-headers
+        kubectl get pods -n metallb-system --no-headers
       register: all_pods
       until: all_pods.stdout_lines | select("search", "Running") | length == all_pods.stdout_lines | length
       retries: 60
