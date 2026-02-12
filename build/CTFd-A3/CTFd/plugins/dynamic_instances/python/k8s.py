@@ -3,7 +3,9 @@ import json
 from CTFd.plugins.challenges import BaseChallenge
 from CTFd.models import db, Challenges
 from CTFd.utils.user import get_current_user
+from ..utils import serialize_challenge
 from ..models import K8sChallengeConfig
+
 
 def _parse_port(value):
     try:

@@ -1,18 +1,25 @@
-(function () {
+// k8s_view.js
+// CTFd challenge renderer for Kubernetes-backed dynamic instances
+
+(() => {
   "use strict";
 
-  // REQUIRED: challenge metadata object. Preserve any existing data from CTFd.
+  /* ------------------------------------------------------------------
+   * REQUIRED CTFd CHALLENGE INTERFACE
+   * ------------------------------------------------------------------ */
+
+  // Preserve existing challenge data if present
   const existing = CTFd._internal.challenge.data || {};
-  CTFd._internal.challenge.data = { ...existing, instance_info: existing.instance_info ?? null };
+  CTFd._internal.challenge.data = existing;
+
+  // Renderer name (optional but correct)
   CTFd._internal.challenge.renderer = "k8s";
 
-  // REQUIRED: must exist or CTFd crashes
-  CTFd._internal.challenge.preRender = function () {
-  };
+  // MUST exist or CTFd throws
+  CTFd._internal.challenge.preRender = function () {};
 
-  // REQUIRED: legacy, still must exist
-  CTFd._internal.challenge.render = function () {
-  };
+  // Legacy hook — must exist
+  CTFd._internal.challenge.render = function () {};
 
   // Called AFTER modal HTML is injected
   CTFd._internal.challenge.postRender = function () {
@@ -23,7 +30,7 @@
     initK8sInstanceUI();
   };
 
-  // We don’t submit flags for k8s
+  // Required even if unused
   CTFd._internal.challenge.submit = function () {
     return Promise.resolve();
   };
@@ -132,13 +139,13 @@
       body: method === "GET" ? null : JSON.stringify(payload),
     });
 
-      if (!res.ok) {
-        const msg = data.message || `HTTP ${res.status}`;
-        throw new Error(msg);
-      }
-
-      return data;
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
     }
+
+    const data = await res.json();
+    return data;
+  }
 
   // Render status, connection info, and TTL.
   function updateStatus(data) {
