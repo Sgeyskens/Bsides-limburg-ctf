@@ -33,7 +33,7 @@ build/
 │   ├── Dockerfile
 │   ├── challenge.yml
 │   └── ...
-├── web-challenge-2/
+├── web-challenge-A3/
 │   ├── Dockerfile
 │   ├── challenge.yml
 │   └── ...

@@ -31,14 +31,23 @@ Ensure the following components are available before running the playbook:
 - Ansible installed on the management host  
 
 ---
-## 3. Configure Environment Variables  
+## 3. Configure Variables
 Rename:
 
 ```
 example.yml → variables.yml
 ```
 
-Edit `variables.yml` to match your Proxmox environment.  
+Edit `variables.yml` to match your environment.  
+Comments in the file explain each variable.
+
+Rename:
+
+```
+deployment-example.yml → deployment.yml
+```
+
+Edit `deployment.yml` to match your  environment.  
 Comments in the file explain each variable.
 
 ## 4. Deployment Workflow
