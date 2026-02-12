@@ -39,7 +39,6 @@ example.yml → variables.yml
 ```
 
 Edit `variables.yml` to match your environment.  
-Comments in the file explain each variable.
 
 Rename:
 
@@ -48,7 +47,14 @@ deployment-example.yml → deployment.yml
 ```
 
 Edit `deployment.yml` to match your  environment.  
-Comments in the file explain each variable.
+
+Rename:
+
+```
+challange-example.yml → challange.yml
+```
+
+Edit `challange.yml` so a strong database password in configured  
 
 ## 4. Deployment Workflow
 
