@@ -1,0 +1,173 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ctfd-web-game
+  namespace: ctfd
+  labels:
+    app: ctfd-web-game
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ctfd-web-game
+  template:
+    metadata:
+      labels:
+        app: ctfd-web-game
+    spec:
+      imagePullSecrets:
+        - name: gitlab-registry
+
+      initContainers:
+        - name: migrate-and-seed
+          image: registry.gitlab.com/it-factory-thomas-more/skil3/25-26/bsides-ctf/challenges/a3/high-score-massacre-a3:latest
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready -h ctfd-web-game-db-service -U game -d game_db; do
+                echo "Waiting for Postgres..."
+                sleep 2
+              done
+              npx prisma migrate deploy && node prisma/seed.js
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://game:game@ctfd-web-game-db-service:5432/game_db"
+            - name: ALLOWED_ORIGINS
+              value: "*"
+
+      containers:
+        - name: ctfd-web-game
+          image: registry.gitlab.com/it-factory-thomas-more/skil3/25-26/bsides-ctf/challenges/a3/high-score-massacre-a3:latest
+          imagePullPolicy: Always
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://game:game@ctfd-web-game-db-service:5432/game_db"
+          ports:
+            - containerPort: 3000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ctfd-web-shop
+  namespace: ctfd
+  labels:
+    app: ctfd-web-shop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ctfd-web-shop
+  template:
+    metadata:
+      labels:
+        app: ctfd-web-shop
+    spec:
+      imagePullSecrets:
+        - name: gitlab-registry
+      containers:
+        - name: ctfd-web-shop
+          image: registry.gitlab.com/it-factory-thomas-more/skil3/25-26/bsides-ctf/challenges/a3/webshop-a3:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ctfd-web-game-service
+  namespace: ctfd
+spec:
+  selector:
+    app: ctfd-web-game
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000
+  type: LoadBalancer
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ctfd-web-shop-service
+  namespace: ctfd
+spec:
+  selector:
+    app: ctfd-web-shop
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: LoadBalancer
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ctfd-web-game-pvc
+  namespace: ctfd
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ctfd-web-game-db
+  namespace: ctfd
+  labels:
+    app: ctfd-web-game-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ctfd-web-game-db
+  template:
+    metadata:
+      labels:
+        app: ctfd-web-game-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:17
+          env:
+            - name: POSTGRES_USER
+              value: "game"
+            - name: POSTGRES_PASSWORD
+              value: "game"
+            - name: POSTGRES_DB
+              value: "game_db"
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: db-data
+              mountPath: /var/lib/postgresql/
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "game", "-d", "game_db"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: db-data
+          persistentVolumeClaim:
+            claimName: ctfd-web-game-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ctfd-web-game-db-service
+  namespace: ctfd
+spec:
+  type: ClusterIP
+  selector:
+    app: ctfd-web-game-db
+  ports:
+    - port: 5432
+      targetPort: 5432

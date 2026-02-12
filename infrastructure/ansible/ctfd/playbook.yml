@@ -231,3 +231,15 @@
   - name: Apply staging issuer and ingress
     ansible.builtin.command: 
       kubectl apply -f /tmp/deployment.yml
+
+  - name: Copy challange.yml to the master
+    ansible.builtin.copy:
+      src: ./challange.yml
+      dest: /tmp/
+      owner: root
+      group: root
+      mode: '0644'
+
+  - name: Apply staging issuer and ingress
+    ansible.builtin.command: 
+      kubectl apply -f /tmp/challange.yml

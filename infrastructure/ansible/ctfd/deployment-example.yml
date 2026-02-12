@@ -50,6 +50,7 @@ metadata:
   namespace: ctfd
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
 spec:
   ingressClassName: nginx
   tls:
@@ -101,3 +102,35 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: dynamic-instances
+
+---
+# ---------------------------------------------------------
+# Ingress for all services
+# ---------------------------------------------------------
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ctfd-ingress
+  namespace: ctfd
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - "*.banaantje.be"
+      secretName: wildcard-tls
+  rules:
+    - host: "ctf.banaantje.be"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ctfd
+                port:
+                  number: 80
+
+

@@ -18,11 +18,34 @@ const __dirname = path.dirname(__filename);
 const PUBLIC_LORE_ROOT = path.resolve(__dirname, "../public");
 const SANDBOX_ALLOWED_ROOT = path.resolve(__dirname, "../sandbox");
 
-const allowedOrigins = new Set([
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
-  "http://localhost:3000"
-]);
+//const allowedOrigins = new Set([
+  //"http://localhost:5173",
+  //"http://127.0.0.1:5173",
+  //"http://localhost:3000"
+//]);
+const allowedOriginsEnv = process.env.ALLOWED_ORIGINS || "*";
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow non-browser requests (curl, Postman)
+    if (!origin) return callback(null, true);
+
+    // Allow all origins if ALLOWED_ORIGINS="*"
+    if (allowedOriginsEnv === "*") {
+      return callback(null, true);
+    }
+
+    // Otherwise check against the list
+    const allowed = new Set(allowedOriginsEnv.split(","));
+    if (allowed.has(origin)) {
+      return callback(null, true);
+    }
+
+    callback(new Error("Not allowed by CORS"));
+  },
+  methods: ["GET", "POST"],
+  credentials: true
+}));
 
 // Helper to handle errors consistently
 const handleError = (res, err, statusCode = 500) => {
@@ -30,19 +53,19 @@ const handleError = (res, err, statusCode = 500) => {
   res.status(statusCode).json({ success: false, error: "Internal server error" });
 };
 
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
+//app.use(cors({
+//  origin: function (origin, callback) {
+//    if (!origin) return callback(null, true);
 
-    if (allowedOrigins.has(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  methods: ["GET", "POST"],
-  credentials: true
-}));
+//    if (allowedOrigins.has(origin)) {
+//      callback(null, true);
+//    } else {
+//      callback(new Error("Not allowed by CORS"));
+//    }
+//  },
+//  methods: ["GET", "POST"],
+//  credentials: true
+//}));
 
 app.use(cookieParser());
 app.use(express.json());
