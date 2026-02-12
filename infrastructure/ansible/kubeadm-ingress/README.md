@@ -1,77 +1,101 @@
-# NGINX Ingress Controller Deployment with Helm
+# NGINX Ingress Controller Deployment Guide (Ansible + Helm)
 
-This Ansible playbook automates the installation of the **NGINX Ingress Controller** on a Kubernetes cluster using Helm. It sets up a fully functional Ingress controller in its own namespace, ready to route traffic to your services.
-
----
-
-## Features
-
-* Adds the **official ingress-nginx Helm repository**.
-* Creates a dedicated **namespace** (`ingress-nginx`) for the controller.
-* Installs or upgrades the **ingress-nginx Helm chart**.
-* Configures the controller with a **LoadBalancer service**.
-* Enables **admission webhooks** required for certain Ingress features.
-* Waits for all Ingress controller pods to be ready before completing.
+This repository provides an automated workflow for deploying the **NGINX Ingress Controller** on a Kubernetes cluster using **Ansible** and **Helm**.  
+The playbook installs the ingress controller in a dedicated namespace and configures it to expose traffic through a LoadBalancer service.
 
 ---
 
-## Requirements
+## 1. Features
 
-* A Kubernetes cluster with `kubectl` access on the control plane.
-* **Helm** installed on the host running the playbook.
-* **Ansible** installed (tested on Ansible 2.9+).
-* The playbook runs on a **control plane node** with access to the kubeconfig (`/etc/kubernetes/admin.conf`).
+The playbook performs the following actions:
 
----
-
-## Usage
-
-1. Clone the repository or place the playbook on your Ansible control host.
-
-2. Run the playbook:
-
-```bash
-ansible-playbook -i inventory.ini playbook.yml
-```
-
-* Ensure your inventory contains the control plane node under the `control_plane` group.
+- Adds the official **ingress-nginx Helm repository**
+- Creates the `ingress-nginx` namespace (configurable)
+- Installs or upgrades the **ingress-nginx** Helm chart
+- Deploys the controller with a **LoadBalancer** service type
+- Enables admission webhooks for advanced Ingress functionality
+- Waits for all ingress controller pods to become Ready before completing
 
 ---
 
-## Variables
+## 2. Requirements
+
+Ensure the following prerequisites are met before running the playbook:
+
+- A Kubernetes cluster with access to `/etc/kubernetes/admin.conf`
+- Helm installed on the Ansible control host
+- Ansible installed (tested with Ansible 2.9+)
+- The playbook must run on a control‑plane node with kubeconfig access
+
+---
+
+## 3. Variables
+
+Configure the deployment using the following variables:
 
 | Variable            | Default Value                 | Description                                       |
-| ------------------- | ----------------------------- | ------------------------------------------------- |
-| `ingress_namespace` | `ingress-nginx`               | Namespace to deploy the ingress controller        |
-| `ingress_release`   | `ingress-nginx`               | Helm release name for the ingress deployment      |
-| `ingress_chart`     | `ingress-nginx/ingress-nginx` | Helm chart for ingress controller                 |
-| `kubeconfig_path`   | `/etc/kubernetes/admin.conf`  | Path to kubeconfig used to connect to the cluster |
+|--------------------|-------------------------------|---------------------------------------------------|
+| `ingress_namespace` | `ingress-nginx`               | Namespace where the ingress controller is deployed |
+| `ingress_release`   | `ingress-nginx`               | Helm release name                                  |
+| `ingress_chart`     | `ingress-nginx/ingress-nginx` | Helm chart reference                               |
+
+Example override file:
+
+```yaml
+ingress_namespace: ingress-nginx
+ingress_release: ingress-nginx
+ingress_chart: ingress-nginx/ingress-nginx
+```
 
 ---
 
-## Access the Ingress Controller
+## 4. Deployment
 
-After deployment:
+### a. Dry Run (Optional)
 
-1. Get the LoadBalancer IP of the NGINX controller:
+Run a check without applying changes:
+
+```bash
+ansible-playbook playbook.yml --check
+```
+
+### b. Apply Configuration
+
+Execute the playbook:
+
+```bash
+ansible-playbook playbook.yml
+```
+
+The playbook will:
+
+- Add the Helm repository  
+- Install or upgrade the ingress controller  
+- Wait for all pods to reach Ready state  
+
+---
+
+## 5. Accessing the Ingress Controller
+
+After deployment, retrieve the LoadBalancer IP:
 
 ```bash
 kubectl get svc -n ingress-nginx
 ```
 
-2. The `controller` service will expose an **external IP** (if your cluster supports LoadBalancers). Use this IP to configure DNS or access your services via Ingress.
+The `controller` service will expose an external IP if your cluster supports LoadBalancer services (e.g., via MetalLB).  
+Use this IP to configure DNS or access applications via Ingress resources.
 
 ---
 
-## Notes
+## 6. Notes
 
-* If your cluster does **not support LoadBalancer services**, you can change:
+- If your environment does **not** support LoadBalancer services, switch to NodePort:
 
-```yaml
---set controller.service.type=NodePort
-```
+  ```yaml
+  --set controller.service.type=NodePort
+  ```
 
-* The playbook **waits** for all pods to be ready before completing.
-* Admission webhooks are enabled by default to allow advanced routing and validation features.
+- Admission webhooks are enabled by default for validation and advanced routing.
+- The playbook is idempotent and safe to re‑run.
 
----

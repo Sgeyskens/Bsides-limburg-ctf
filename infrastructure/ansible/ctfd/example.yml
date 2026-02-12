@@ -1,0 +1,24 @@
+kubeconfig_path: "/etc/kubernetes/admin.conf"
+
+ctfd_namespace: ctfd
+longhorn_namespace: longhorn-system
+
+storage:
+  class_name: longhorn   # The StorageClass name to use
+
+mariadb:
+  release_name: mariadb
+  root_password: ***
+  user: ctfd
+  password: ***
+  database: ctfd
+  storage: 10Gi
+  
+ctfd:
+  release_name: ctfd
+  service_type: ClusterIP
+  ctfd_secret_key: "***"
+
+cert_namespace: cert-manager
+cert_release: cert-manager
+cert_chart: jetstack/cert-manager

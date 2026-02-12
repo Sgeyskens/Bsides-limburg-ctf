@@ -26,3 +26,4 @@
 # helm
 **/helm/ctfd/Values.yaml
 **/ctfd/deployment.yml
+**/ctfd/variables.yml
