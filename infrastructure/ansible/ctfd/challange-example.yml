@@ -39,7 +39,7 @@ spec:
               npx prisma migrate deploy && node prisma/seed.js
           env:
             - name: DATABASE_URL
-              value: "postgresql://game:NWk8GacLXNF5rfGStn88@ctfd-web-game-db-service:5432/game_db"
+              value: "postgresql://game:***@ctfd-web-game-db-service:5432/game_db"
             - name: ALLOWED_ORIGINS
               value: "*"
 
@@ -49,7 +49,7 @@ spec:
           imagePullPolicy: Always
           env:
             - name: DATABASE_URL
-              value: "postgresql://game:NWk8GacLXNF5rfGStn88@ctfd-web-game-db-service:5432/game_db"
+              value: "postgresql://game:***@ctfd-web-game-db-service:5432/game_db"
           ports:
             - containerPort: 3000
 ---
@@ -191,7 +191,7 @@ spec:
             - name: POSTGRES_USER
               value: "game"
             - name: POSTGRES_PASSWORD
-              value: "gaNWk8GacLXNF5rfGStn88me"
+              value: "***"
             - name: POSTGRES_DB
               value: "game_db"
           ports:
