@@ -19,8 +19,8 @@ spec:
         - name: gitlab-registry
 
       initContainers:
-        - name: migrate-and-seed
-          image: registry.gitlab.com/it-factory-thomas-more/skil3/25-26/bsides-ctf/challenges/a3/high-score-massacre-a3:latest
+        - name: wait-for-db
+          image: postgres:17
           command:
             - sh
             - -c
@@ -29,6 +29,13 @@ spec:
                 echo "Waiting for Postgres..."
                 sleep 2
               done
+
+        - name: migrate-and-seed
+          image: registry.gitlab.com/it-factory-thomas-more/skil3/25-26/bsides-ctf/challenges/a3/high-score-massacre-a3:latest
+          command:
+            - sh
+            - -c
+            - |
               npx prisma migrate deploy && node prisma/seed.js
           env:
             - name: DATABASE_URL
