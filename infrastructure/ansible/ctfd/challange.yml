@@ -70,6 +70,7 @@ spec:
       labels:
         app: ctfd-web-shop
     spec:
+      restartPolicy: Always
       imagePullSecrets:
         - name: gitlab-registry
       containers:
@@ -78,6 +79,24 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 80
+          env:
+            - name: APACHE_RUN_USER
+              value: "www-data"
+            - name: APACHE_RUN_GROUP
+              value: "www-data"
+          volumeMounts:
+            - name: storage-volume
+              mountPath: /var/www/html/storage
+            - name: database-volume
+              mountPath: /var/www/html/database
+      volumes:
+        - name: storage-volume
+          persistentVolumeClaim:
+            claimName: ctfd-web-shop-storage
+        - name: database-volume
+          persistentVolumeClaim:
+            claimName: ctfd-web-shop-database
+
 
 ---
 apiVersion: v1
@@ -121,6 +140,31 @@ spec:
   resources:
     requests:
       storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ctfd-web-shop-storage
+  namespace: ctfd
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ctfd-web-shop-database
+  namespace: ctfd
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
 
 ---
 apiVersion: apps/v1

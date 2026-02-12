@@ -178,18 +178,6 @@
       --timeout=300s
     ignore_errors: true
 
-  - name: Show CTFd access info
-    ansible.builtin.debug:
-      msg: |
-        CTFd should be available soon at:
-        http://{{ external_ip.stdout | default('EXTERNAL-IP-PENDING (wait 1-2 min for MetalLB)') }}
-
-        Check status:
-        kubectl get all -n {{ ctfd_namespace }}
-
-        Pod logs if issues:
-        kubectl logs -n {{ ctfd_namespace }} -l app.kubernetes.io/name=ctfd -f
-
 
   - name: Add Jetstack Helm repository
     ansible.builtin.command: >
@@ -243,3 +231,50 @@
   - name: Apply staging issuer and ingress
     ansible.builtin.command: 
       kubectl apply -f /tmp/challange.yml
+
+  - name: Get CTFd ingress info
+    ansible.builtin.command: >
+      kubectl get ingress -n {{ ctfd_namespace }} ctfd-ingress -o json
+    register: ingress_info
+
+  - name: Extract ingress host (domain)
+    ansible.builtin.set_fact:
+      ctfd_ingress_host: >-
+        {{ ingress_info.stdout | from_json
+          | json_query('spec.rules[0].host')
+        }}
+
+
+  - name: Get all services in ctfd namespace
+    ansible.builtin.command: >
+      kubectl get svc -n {{ ctfd_namespace }} -o json
+    register: ctfd_services_raw
+
+  - name: Extract LoadBalancer services with their addresses
+    ansible.builtin.set_fact:
+      ctfd_loadbalancers: >-
+        {{
+          ctfd_services_raw.stdout | from_json
+          | json_query('items[?spec.type==`LoadBalancer`].{name: metadata.name, lb: status.loadBalancer.ingress[0]}')
+        }}
+
+  - name: Show CTFd access info
+    ansible.builtin.debug:
+      msg: |
+        CTFd should be available soon at:
+        https://{{ ctfd_ingress_host }}
+
+        Check status:
+        kubectl get all -n {{ ctfd_namespace }}
+
+        Pod logs if issues:
+        kubectl logs -n {{ ctfd_namespace }} -l app.kubernetes.io/name=ctfd -f
+
+  - name: Show all LoadBalancer addresses in ctfd namespace
+    ansible.builtin.debug:
+      msg: |
+        LoadBalancer services in namespace {{ ctfd_namespace }}:
+
+        {% for svc in ctfd_loadbalancers %}
+        - {{ svc.name }}: {{ svc.lb.ip | default(svc.lb.hostname) }}
+        {% endfor %}
